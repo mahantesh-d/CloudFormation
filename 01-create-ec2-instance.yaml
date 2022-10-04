@@ -1,0 +1,9 @@
+#Creates the ec2 instances
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.micro
+      ImageId: ami-01216e7612243e0ef
+      AvailabilityZone: ap-south-1a
+      
