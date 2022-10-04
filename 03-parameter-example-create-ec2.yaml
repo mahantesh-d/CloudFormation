@@ -1,0 +1,34 @@
+Parameters:
+  MyImageID:
+    Description: SSM parameter This will auto gives the latest image id based on the os and region use aws public parameter
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+
+  InstanceType:
+    Description: This normal parameter gives the list of instance type
+    Type: String
+    Default: t2.nano
+    AllowedValues:
+       - "t2.nano"
+       - "t2.micro"
+       - "t2.small"
+    ConstraintDescription: Allowed only valid aws instance type
+
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref MyImageID
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref MySecurityGroup
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: This security group enables ssh to ec2 instances
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
