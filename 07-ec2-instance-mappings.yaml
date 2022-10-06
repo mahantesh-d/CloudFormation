@@ -1,0 +1,62 @@
+Parameters:
+  MySSHKeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: Please select the available Key Name from the list
+
+  MyImageID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Description: This will pick the latest amazon-2 image
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+
+  AvailabilityZone:
+    Type: AWS::EC2::AvailabilityZone::Name
+
+  MySecurityGroupPort:
+    Type: Number
+    MinValue: 10
+    MaxValue: 100  
+
+  EnviromentType:
+    Description: Select the Enviroment Type
+    Type: String
+    Default: Dev
+    AllowedValues:
+      - "Dev"
+      - "UAT"
+      - "Prod"
+
+Mappings:
+  EnvToInstanceType:
+    Dev:
+      InstanceType: t2.nano
+    UAT:
+      InstanceType: t2.micro
+    Prod:
+      InstanceType: t2.small    
+
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !Ref AvailabilityZone
+      InstanceType: !FindInMap [EnvToInstanceType, !Ref EnviromentType, InstanceType]
+      ImageId: !Ref MyImageID
+      SecurityGroups:
+        - !Ref MySecurityGroup
+      KeyName: !Ref MySSHKeyName
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: This is demo security group enables the SSH
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          ToPort: 22
+          FromPort: 22
+          CidrIp: 0.0.0.0/0
+
+  MyEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MyEC2Instance        
+
