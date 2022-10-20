@@ -1,0 +1,80 @@
+Parameters:
+  MyImageID:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/amzn-ami-hvm-x86_64-gp2
+
+  MyAZ:
+    Type: AWS::EC2::AvailabilityZone::Name 
+
+  MyKeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: Please provide the availabe keyname
+
+Resources:
+  MyEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !Ref MyAZ
+      ImageId: !Ref MyImageID
+      InstanceType: t2.micro
+      NetworkInterfaces:
+        - DeviceIndex: "0"
+          AssociatePublicIpAddress: "true"
+          SubnetId: !Ref MySubnet
+          GroupSet:
+            - !Ref MySecurityGroup
+      KeyName: !Ref MyKeyName
+      Tags:
+        - Key: Name
+          Value: my-ec2-instance
+
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Demo security group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0    
+      VpcId: !Ref MyVPCCF        
+
+  MyVPCCF:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/24
+      
+  MySubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref  MyVPCCF
+      CidrBlock: 10.0.0.0/24
+      AvailabilityZone: !Ref MyAZ
+
+  MyRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref MyVPCCF
+
+  MyInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties: {}
+          
+  AttachVPCToGatewWay:
+     Type: AWS::EC2::VPCGatewayAttachment
+     Properties:
+       VpcId: !Ref MyVPCCF
+       InternetGatewayId: !Ref MyInternetGateway
+    
+  AccociateSubnetRT:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref MySubnet
+      RouteTableId: !Ref MyRouteTable
+
+  CreateRoutetoaccess:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref MyRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref MyInternetGateway
